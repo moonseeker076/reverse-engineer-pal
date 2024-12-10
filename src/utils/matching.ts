@@ -26,12 +26,6 @@ export const findMatches = async (borrower: Borrower, lenders: Lender[]): Promis
           score += 50;
         }
         
-        // Bonus points for having multiple relevant industries
-        score += (lender.industries.length * 5);
-        
-        // Bonus points for having multiple loan types
-        score += (lender.loanTypes.length * 5);
-        
         return { lender, score };
       })
       .filter(({ score }) => score > 0) // Remove disqualified lenders
@@ -43,6 +37,6 @@ export const findMatches = async (borrower: Borrower, lenders: Lender[]): Promis
     return matches;
   } catch (error) {
     console.error('Error in findMatches:', error);
-    throw error; // Let the calling function handle the error
+    throw error;
   }
 };

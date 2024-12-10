@@ -3,8 +3,8 @@ import { Button } from "@/components/ui/button";
 import { findMatches } from '@/utils/matching';
 import { notifyAdmin, sendEmail } from '@/utils/email';
 import { toast } from "sonner";
-import { Borrower, Lender } from '@/types/types';
 import { Alert, AlertDescription } from "@/components/ui/alert";
+import { Borrower, Lender } from '@/types/types';
 
 const Index = () => {
   const [matches, setMatches] = useState<Lender[]>([]);
