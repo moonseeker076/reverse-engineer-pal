@@ -5,83 +5,91 @@ import { notifyAdmin, sendEmail } from '@/utils/email';
 import { toast } from "sonner";
 import { Alert, AlertDescription } from "@/components/ui/alert";
 import { Borrower, Lender } from '@/types/types';
+import { Input } from "@/components/ui/input";
+import { Label } from "@/components/ui/label";
 
 const Index = () => {
   const [matches, setMatches] = useState<Lender[]>([]);
   const [isProcessing, setIsProcessing] = useState(false);
   const [error, setError] = useState<string | null>(null);
+  const [formData, setFormData] = useState<Borrower>({
+    firstName: '',
+    lastName: '',
+    businessName: '',
+    loanamountrequest: 0,
+    industry: '',
+    loanTypeyouarerequesting: ''
+  });
 
-  const handleMatchingProcess = async (borrowerData: Borrower) => {
-    console.log('Starting matching process');
+  const handleInputChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const { name, value } = e.target;
+    setFormData(prev => ({
+      ...prev,
+      [name]: name === 'loanamountrequest' ? Number(value) : value
+    }));
+  };
+
+  const handleSubmit = async (e: React.FormEvent) => {
+    e.preventDefault();
     setIsProcessing(true);
     setError(null);
     
     try {
-      // Simulated lenders data - in production this would come from your database
-      const lenders: Lender[] = [
-        {
-          lenderName: "Test Lender 1",
-          contactEmail: "lender1@test.com",
-          LoanAmounts: 50000,
-          industries: ["Technology", "Healthcare"],
-          loanTypes: ["Term Loan", "Line of Credit"]
-        },
-        {
-          lenderName: "Test Lender 2",
-          contactEmail: "lender2@test.com",
-          LoanAmounts: 100000,
-          industries: ["Retail", "Technology"],
-          loanTypes: ["Equipment Financing", "Term Loan"]
-        },
-        {
-          lenderName: "Test Lender 3",
-          contactEmail: "lender3@test.com",
-          LoanAmounts: 250000,
-          industries: ["Manufacturing", "Technology", "Healthcare"],
-          loanTypes: ["SBA Loan", "Term Loan", "Line of Credit"]
-        }
-      ];
-
-      const foundMatches = await findMatches(borrowerData, lenders);
-      console.log('Matches found:', foundMatches);
-      
-      if (foundMatches.length > 0) {
-        setMatches(foundMatches);
-        
-        // Send notifications in parallel
-        await Promise.all([
-          notifyAdmin(borrowerData, foundMatches),
-          sendEmail('member', 'match-notification', {
-            SITE_URL: window.location.origin,
-            LENDERS: foundMatches
-          })
-        ]);
-        
-        toast.success(`Found ${foundMatches.length} matching lenders!`);
-      } else {
-        toast.warning("No matching lenders found for your criteria");
-      }
-    } catch (error) {
-      console.error('Error in matching process:', error);
-      setError(error instanceof Error ? error.message : 'An unexpected error occurred');
-      toast.error("An error occurred during the matching process");
+      await handleMatchingProcess(formData);
+    } catch (err) {
+      setError(err instanceof Error ? err.message : 'An unexpected error occurred');
     } finally {
       setIsProcessing(false);
     }
   };
 
-  // Test function to simulate different scenarios
-  const runTest = async (scenario: string) => {
-    const testBorrower: Borrower = {
-      firstName: "Test",
-      lastName: "User",
-      businessName: "Test Business",
-      loanamountrequest: scenario === 'no-matches' ? 1000000000 : 75000,
-      industry: "Technology",
-      loanTypeyouarerequesting: "Term Loan"
-    };
+  const handleMatchingProcess = async (borrowerData: Borrower) => {
+    console.log('Starting matching process');
+    
+    // Simulated lenders data - in production this would come from your database
+    const lenders: Lender[] = [
+      {
+        lenderName: "Test Lender 1",
+        contactEmail: "lender1@test.com",
+        LoanAmounts: 50000,
+        industries: ["Technology", "Healthcare"],
+        loanTypes: ["Term Loan", "Line of Credit"]
+      },
+      {
+        lenderName: "Test Lender 2",
+        contactEmail: "lender2@test.com",
+        LoanAmounts: 100000,
+        industries: ["Retail", "Technology"],
+        loanTypes: ["Equipment Financing", "Term Loan"]
+      },
+      {
+        lenderName: "Test Lender 3",
+        contactEmail: "lender3@test.com",
+        LoanAmounts: 250000,
+        industries: ["Manufacturing", "Technology", "Healthcare"],
+        loanTypes: ["SBA Loan", "Term Loan", "Line of Credit"]
+      }
+    ];
 
-    await handleMatchingProcess(testBorrower);
+    const foundMatches = await findMatches(borrowerData, lenders);
+    console.log('Matches found:', foundMatches);
+    
+    if (foundMatches.length > 0) {
+      setMatches(foundMatches);
+      
+      // Send notifications in parallel
+      await Promise.all([
+        notifyAdmin(borrowerData, foundMatches),
+        sendEmail('member', 'match-notification', {
+          SITE_URL: window.location.origin,
+          LENDERS: foundMatches
+        })
+      ]);
+      
+      toast.success(`Found ${foundMatches.length} matching lenders!`);
+    } else {
+      toast.warning("No matching lenders found for your criteria");
+    }
   };
 
   return (
@@ -94,22 +102,79 @@ const Index = () => {
         </Alert>
       )}
 
-      <div className="flex flex-col space-y-4 md:flex-row md:space-x-4 md:space-y-0">
-        <Button 
-          onClick={() => runTest('normal')}
-          disabled={isProcessing}
-        >
-          {isProcessing ? 'Processing...' : 'Test Normal Match'}
-        </Button>
+      <form onSubmit={handleSubmit} className="space-y-4 max-w-md">
+        <div className="space-y-2">
+          <Label htmlFor="firstName">First Name</Label>
+          <Input
+            id="firstName"
+            name="firstName"
+            value={formData.firstName}
+            onChange={handleInputChange}
+            required
+          />
+        </div>
 
-        <Button 
-          onClick={() => runTest('no-matches')}
-          variant="secondary"
-          disabled={isProcessing}
-        >
-          Test No Matches
+        <div className="space-y-2">
+          <Label htmlFor="lastName">Last Name</Label>
+          <Input
+            id="lastName"
+            name="lastName"
+            value={formData.lastName}
+            onChange={handleInputChange}
+            required
+          />
+        </div>
+
+        <div className="space-y-2">
+          <Label htmlFor="businessName">Business Name</Label>
+          <Input
+            id="businessName"
+            name="businessName"
+            value={formData.businessName}
+            onChange={handleInputChange}
+            required
+          />
+        </div>
+
+        <div className="space-y-2">
+          <Label htmlFor="loanamountrequest">Loan Amount Request ($)</Label>
+          <Input
+            id="loanamountrequest"
+            name="loanamountrequest"
+            type="number"
+            min="0"
+            value={formData.loanamountrequest || ''}
+            onChange={handleInputChange}
+            required
+          />
+        </div>
+
+        <div className="space-y-2">
+          <Label htmlFor="industry">Industry</Label>
+          <Input
+            id="industry"
+            name="industry"
+            value={formData.industry}
+            onChange={handleInputChange}
+            required
+          />
+        </div>
+
+        <div className="space-y-2">
+          <Label htmlFor="loanTypeyouarerequesting">Loan Type</Label>
+          <Input
+            id="loanTypeyouarerequesting"
+            name="loanTypeyouarerequesting"
+            value={formData.loanTypeyouarerequesting}
+            onChange={handleInputChange}
+            required
+          />
+        </div>
+
+        <Button type="submit" disabled={isProcessing}>
+          {isProcessing ? 'Processing...' : 'Find Matching Lenders'}
         </Button>
-      </div>
+      </form>
 
       {matches.length > 0 && (
         <div className="mt-6">
